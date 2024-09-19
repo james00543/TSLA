@@ -50,9 +50,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       cost: stocks[0].avgCost * stocks[0].qty,
       amount: tslaPrice * stocks[0].qty,
     };
-
-    const tsllPrice =
-      stocks[1].currentPrice * 2 * 100*((tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice);
+  
+    // Calculate the percentage change in TSLA price
+    const tslaPercentChange = (tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice;
+    
+    // Apply 2x leverage for TSLL
+    const tsllPrice = stocks[1].currentPrice * (1 + 2 * tslaPercentChange);
+    
     const tsll = {
       ...stocks[1],
       simPrice: tsllPrice,
@@ -60,13 +64,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       cost: stocks[1].avgCost * stocks[1].qty,
       amount: tsllPrice * stocks[1].qty,
     };
-
+  
     const total = {
       amount: tsla.amount + tsll.amount,
       cost: tsla.cost + tsll.cost,
       pnl: (tsla.amount + tsll.amount - (tsla.cost + tsll.cost)) / (tsla.cost + tsll.cost),
     };
-
+  
     return { tsla, tsll, total };
   };
 
