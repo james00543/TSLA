@@ -52,7 +52,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     };
 
     const tsllPrice =
-      stocks[1].currentPrice * 2 * (1 + (tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice);
+      stocks[1].currentPrice * 2 * 100*((tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice);
     const tsll = {
       ...stocks[1],
       simPrice: tsllPrice,
