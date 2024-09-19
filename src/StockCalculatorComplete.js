@@ -148,11 +148,13 @@ const handleTslaSimChange = (e) => {
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
 
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          TSLA Simulated Price:
+        </label>
         <input
           type="number"
-          value={tslaSim}  // Show whatever the tslaSim value is
-          onChange={handleTslaSimChange}
+          value={tslaSim === 0 ? "" : tslaSim}  // If 0, show an empty string
+          onChange={(e) => setTslaSim(Number(e.target.value))}
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
