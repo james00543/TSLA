@@ -121,7 +121,11 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   };
 
   const { tsla, tsll, total } = calculateValues(tslaSim);
-
+// Handle number input
+const handleTslaSimChange = (e) => {
+  const value = e.target.value;
+  setTslaSim(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
+};
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Ticker Section */}
@@ -147,8 +151,8 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
         <input
           type="number"
-          value={tslaSim}
-          onChange={(e) => setTslaSim(Number(e.target.value))}
+          value={tslaSim}  // Show whatever the tslaSim value is
+          onChange={handleTslaSimChange}
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
