@@ -122,16 +122,10 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const { tsla, tsll, total } = calculateValues(tslaSim);
 
-// Handle number input safely
+// Handle number input for TSLA Simulated Price
 const handleTslaSimChange = (e) => {
   const value = e.target.value;
-
-  // If input is empty, don't set it to an empty string, use `null` instead
-  if (value === "") {
-    setTslaSim(null);
-  } else {
-    setTslaSim(Number(value)); // Convert the input to a number when not empty
-  }
+  setTslaSim(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
 };
 
 // Handle number input for Target Total Amount
@@ -166,7 +160,7 @@ const handleTargetValueChange = (e) => {
       </label>
       <input
       type="number"
-      value={tslaSim === null || tslaSim === 0 ? "" : tslaSim}  // Show an empty string if `null` or `0`
+      value={tslaSim === "" ? "" : tslaSim}  // Display empty string when no value is entered
       onChange={handleTslaSimChange}  // Use the updated handler
       className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
     />
