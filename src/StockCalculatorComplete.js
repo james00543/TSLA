@@ -125,6 +125,25 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 const handleTslaSimChange = (e) => {
   const value = e.target.value;
   setTslaSim(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
+
+  const [targetValue, setTargetValue] = useState("");  // Start with an empty string
+
+const handleTargetValueChange = (e) => {
+  const value = e.target.value;
+  setTargetValue(value === "" ? "" : Number(value));  // If empty, keep as a string; otherwise, convert to a number
+};
+
+return (
+  <div className="mb-8">
+    <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
+    <input
+      type="number"
+      value={targetValue}  // Reflect the updated targetValue state
+      onChange={handleTargetValueChange}
+      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+);
 };
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
