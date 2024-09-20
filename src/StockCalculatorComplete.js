@@ -42,7 +42,9 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   }, []);
 
   const calculateValues = (tslaPrice) => {
-    if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) return { tsla: {}, tsll: {}, total: {} };
+    if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) {
+      return { tsla: {}, tsll: {}, total: {} };
+    }
 
     const tsla = {
       ...stocks[0],
@@ -128,7 +130,10 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     if (value === "") {
       setTslaSim(null);
     } else {
-      setTslaSim(Number(value));
+      const numericValue = Number(value);
+      if (!isNaN(numericValue)) {
+        setTslaSim(numericValue);
+      }
     }
   };
 
