@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { SpeedInsights } from "@vercel/speed-insights/react"
 
 const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace with your Finnhub API token
 
@@ -43,6 +42,8 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   }, []);
 
   const calculateValues = (tslaPrice) => {
+    if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) return { tsla: {}, tsll: {}, total: {} };
+
     const tsla = {
       ...stocks[0],
       simPrice: tslaPrice,
@@ -50,13 +51,10 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       cost: stocks[0].avgCost * stocks[0].qty,
       amount: tslaPrice * stocks[0].qty,
     };
-  
-    // Calculate the percentage change in TSLA price
+
     const tslaPercentChange = (tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice;
-    
-    // Apply 2x leverage for TSLL
     const tsllPrice = stocks[1].currentPrice * (1 + 2 * tslaPercentChange);
-    
+
     const tsll = {
       ...stocks[1],
       simPrice: tsllPrice,
@@ -64,13 +62,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       cost: stocks[1].avgCost * stocks[1].qty,
       amount: tsllPrice * stocks[1].qty,
     };
-  
+
     const total = {
       amount: tsla.amount + tsll.amount,
       cost: tsla.cost + tsll.cost,
       pnl: (tsla.amount + tsll.amount - (tsla.cost + tsll.cost)) / (tsla.cost + tsll.cost),
     };
-  
+
     return { tsla, tsll, total };
   };
 
@@ -79,18 +77,18 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     let high = 10000; // Assuming TSLA won't go above $10,000
     let mid;
     let result;
-  
+
     while (high - low > 0.00001) {
       mid = (low + high) / 2;
       result = calculateValues(mid);
-  
+
       if (result.total.amount > targetValue) {
         high = mid;
       } else {
         low = mid;
       }
     }
-  
+
     // Set the result with all calculated values for the Goal Seek
     setGoalSeekResult({
       tsla: {
@@ -122,17 +120,24 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const { tsla, tsll, total } = calculateValues(tslaSim);
 
-// Handle number input for TSLA Simulated Price
-const handleTslaSimChange = (e) => {
-  const value = e.target.value;
-  setTslaSim(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
-};
+  // Handle number input for TSLA Simulated Price
+  const handleTslaSimChange = (e) => {
+    const value = e.target.value;
 
-// Handle number input for Target Total Amount
-const handleTargetValueChange = (e) => {
-  const value = e.target.value;
-  setTargetValue(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
-};
+    // Only update state if the value is a valid number or empty
+    if (value === "") {
+      setTslaSim(null);
+    } else {
+      setTslaSim(Number(value));
+    }
+  };
+
+  // Handle number input for Target Total Amount
+  const handleTargetValueChange = (e) => {
+    const value = e.target.value;
+    setTargetValue(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Ticker Section */}
@@ -154,17 +159,17 @@ const handleTargetValueChange = (e) => {
       {/* Stock Portfolio Simulator */}
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
 
-    <div className="mb-8">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        TSLA Simulated Price:
-      </label>
-      <input
-      type="number"
-      value={tslaSim === 0 ? "" : tslaSim}  // Display empty string when no value is entered
-      onChange={handleTslaSimChange}  // Use the updated handler
-      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-    />
-    </div>
+      <div className="mb-8">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          TSLA Simulated Price:
+        </label>
+        <input
+          type="number"
+          value={tslaSim === null ? "" : tslaSim}  // Display empty string when no value is entered
+          onChange={handleTslaSimChange}  // Use the updated handler
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
 
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
@@ -226,18 +231,18 @@ const handleTargetValueChange = (e) => {
                 <tr key={stock.symbol}>
                   <td className="px-6 py-4 whitespace-nowrap">{stock.symbol}</td>
                   <td className="px-6 py-4 whitespace-nowrap">${stock.avgCost.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.simPrice.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${stock.simPrice?.toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{(stock.simPnl * 100).toFixed(2)}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.cost.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${stock.cost?.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${stock.amount?.toFixed(2)}</td>
                 </tr>
               ))}
               <tr className="font-bold">
                 <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>
                   Total:
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">${total.cost.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${total.amount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">${total.cost?.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">${total.amount?.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
