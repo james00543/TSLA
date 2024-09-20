@@ -160,7 +160,7 @@ const handleTargetValueChange = (e) => {
       </label>
       <input
       type="number"
-      value={tslaSim === "" ? "" : tslaSim}  // Display empty string when no value is entered
+      value={tslaSim === 0 ? "" : tslaSim}  // Display empty string when no value is entered
       onChange={handleTslaSimChange}  // Use the updated handler
       className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
     />
