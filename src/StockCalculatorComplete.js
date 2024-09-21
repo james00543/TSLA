@@ -125,16 +125,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   // Handle number input for TSLA Simulated Price
   const handleTslaSimChange = (e) => {
     const value = e.target.value;
-
-    // Only update state if the value is a valid number or empty
-    if (value === "") {
-      setTslaSim(null);
-    } else {
-      const numericValue = Number(value);
-      if (!isNaN(numericValue)) {
-        setTslaSim(numericValue);
-      }
-    }
+    setTslaSim(value === "" ? "" : Number(value));
   };
 
   // Handle number input for Target Total Amount
@@ -170,12 +161,17 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </label>
         <input
           type="number"
-          value={tslaSim === null ? "" : tslaSim}  // Display empty string when no value is entered
+          value={tslaSim === 0 ? "" : tslaSim}  // Display empty string when no value is entered
           onChange={handleTslaSimChange}  // Use the updated handler
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
-
+      {/* <input
+          type="number"
+          value={targetValue === 0 ? "" : targetValue}  // If 0, show an empty string
+          onChange={handleTargetValueChange}  // Attach the handler
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        /> */}
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
         {stocks.map((stock, index) => (
