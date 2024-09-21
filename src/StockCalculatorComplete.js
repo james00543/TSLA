@@ -7,8 +7,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2500 },
   ]);
-  const [tslaSimInput, setTslaSimInput] = useState(""); // Input field for TSLA Simulated Price
-  const [tslaSim, setTslaSim] = useState(null); // Submitted TSLA Simulated Price
+  const [tslaSim, setTslaSim] = useState(""); // Simulated price for TSLA, starts as an empty string
   const [targetValue, setTargetValue] = useState(1000000);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [error, setError] = useState(null);
@@ -42,7 +41,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const calculateValues = (tslaPrice) => {
     if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) {
-      return { tsla: null, tsll: null, total: null };
+      return { tsla: null, tsll: null, total: null };  // Return null values if invalid input
     }
 
     const tsla = {
@@ -90,6 +89,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       }
     }
 
+    // Set the result with all calculated values for the Goal Seek
     setGoalSeekResult({
       tsla: {
         simPrice: mid.toFixed(2),
@@ -118,18 +118,12 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     setStocks(newStocks);
   };
 
-  const { tsla, tsll, total } = tslaSim !== null ? calculateValues(tslaSim) : { tsla: {}, tsll: {}, total: {} };
+  const { tsla, tsll, total } = calculateValues(tslaSim || 0);
 
   // Handle number input for TSLA Simulated Price
   const handleTslaSimChange = (e) => {
-    setTslaSimInput(e.target.value);
-  };
-
-  // Handle submitting TSLA Simulated Price
-  const handleTslaSimSubmit = () => {
-    if (tslaSimInput !== "" && !isNaN(tslaSimInput)) {
-      setTslaSim(Number(tslaSimInput));
-    }
+    const value = e.target.value;
+    setTslaSim(value);
   };
 
   // Handle number input for Target Total Amount
@@ -160,21 +154,15 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
 
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            value={tslaSimInput}
-            onChange={handleTslaSimChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
-          <button
-            onClick={handleTslaSimSubmit}
-            className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
-          >
-            Submit
-          </button>
-        </div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          TSLA Simulated Price:
+        </label>
+        <input
+          type="number"
+          value={tslaSim}
+          onChange={handleTslaSimChange}
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
 
       {/* Goal Seek Result Display */}
