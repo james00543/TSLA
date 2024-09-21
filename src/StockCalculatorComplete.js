@@ -7,7 +7,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2500 },
   ]);
-  const [indices, setIndices] = useState([]); // To store market indices
   const [tslaSim, setTslaSim] = useState(2393); // The confirmed simulated price for TSLA
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim); // Temporary state for user input
   const [targetValue, setTargetValue] = useState(1000000);
@@ -39,41 +38,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     };
 
     fetchStockData();
-  }, []);
-
-  // Fetch market indices
-  useEffect(() => {
-    const fetchMarketIndices = async () => {
-      const indicesToFetch = [
-        { symbol: '^IXIC', name: 'Nasdaq' },
-        { symbol: '^GSPC', name: 'S&P' },
-        { symbol: '^DJI', name: 'Dow' },
-        { symbol: '^TNX', name: '10-Year' }
-      ];
-
-      try {
-        const indexPromises = indicesToFetch.map(index =>
-          fetch(`https://finnhub.io/api/v1/quote?symbol=${index.symbol}&token=${FINNHUB_TOKEN}`)
-            .then(res => res.json())
-            .then(data => ({
-              name: index.name,
-              price: data.c || 0,
-              change: data.d || 0,
-              changePercent: data.dp || 0
-            }))
-            .catch(() => ({
-              name: index.name, price: 0, change: 0, changePercent: 0
-            })) // handle fetch error
-        );
-
-        const indexData = await Promise.all(indexPromises);
-        setIndices(indexData);
-      } catch (error) {
-        console.error("Failed to fetch market indices:", error);
-      }
-    };
-
-    fetchMarketIndices();
   }, []);
 
   const calculateValues = (tslaPrice) => {
@@ -173,38 +137,22 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     setTargetValue(value === "" ? "" : Number(value)); 
   };
 
-  // Utility function to display arrows
-  const displayArrow = (change) => {
-    if (change > 0) return '▲';
-    if (change < 0) return '▼';
-    return ''; // no change
-  };
-
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-      {/* Market Indices */}
-      <h2 className="text-2xl font-semibold mb-4">Market Overview</h2>
-      <div className="grid grid-cols-1 gap-2 mb-8">
-        {indices.length > 0 ? (
-          indices.map(index => (
-            <div key={index.name} className="flex justify-between items-center">
+      {/* Ticker Section */}
+      <div className="bg-gray-900 text-white py-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 px-4">
+          {stocks.map((stock) => (
+            <div key={stock.symbol} className="flex justify-between items-center">
               <div className="flex items-center">
-                <span className={index.change > 0 ? 'text-green-500' : 'text-red-500'}>
-                  {displayArrow(index.change)}
-                </span>
-                <span className="ml-2 font-bold">{index.name}</span>
+                <span className="font-bold">{stock.symbol}</span>
               </div>
               <div className="text-right">
-                <span>{index.price?.toFixed(2)}</span>
-                <span className={index.change > 0 ? 'text-green-500 ml-2' : 'text-red-500 ml-2'}>
-                  {index.change > 0 ? `+${index.changePercent?.toFixed(2)}%` : `${index.changePercent?.toFixed(2)}%`}
-                </span>
+                <div>${stock.currentPrice.toFixed(2)}</div>
               </div>
             </div>
-          ))
-        ) : (
-          <div>Loading market indices...</div>
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Stock Portfolio Simulator */}
