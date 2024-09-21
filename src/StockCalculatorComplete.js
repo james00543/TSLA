@@ -25,9 +25,10 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
             .then(res => res.json())
             .then(data => ({
               symbol,
-              currentPrice: data.c,
-              change: data.d,
+              currentPrice: data.c || 0,
+              change: data.d || 0,
             }))
+            .catch(() => ({ symbol, currentPrice: 0, change: 0 })) // handle fetch error
         );
 
         const stockData = await Promise.all(stockPromises);
@@ -39,6 +40,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
       } catch (err) {
         setError('Failed to fetch stock data.');
+        console.error(err);
       }
     };
 
@@ -61,10 +63,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
             .then(res => res.json())
             .then(data => ({
               name: index.name,
-              price: data.c,
-              change: data.d,
-              changePercent: data.dp
+              price: data.c || 0,
+              change: data.d || 0,
+              changePercent: data.dp || 0
             }))
+            .catch(() => ({
+              name: index.name, price: 0, change: 0, changePercent: 0
+            })) // handle fetch error
         );
 
         const indexData = await Promise.all(indexPromises);
@@ -112,7 +117,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const runGoalSeek = () => {
     let low = 0;
-    let high = 10000; // Assuming TSLA won't go above $10,000
+    let high = 10000;
     let mid;
     let result;
 
@@ -149,30 +154,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     });
   };
 
-  const handleStockChange = (index, field, value) => {
-    const newStocks = [...stocks];
-    newStocks[index][field] = parseFloat(value);
-    setStocks(newStocks);
-  };
-
   const { tsla, tsll, total } = calculateValues(tslaSim);
-
-  // Handle number input for TSLA Simulated Price
-  const handleTslaSimChange = (e) => {
-    const value = e.target.value;
-    setInputTslaSim(value === "" ? "" : Number(value));
-  };
-
-  // Update tslaSim when "Submit" button is clicked
-  const handleTslaSimSubmit = () => {
-    setTslaSim(inputTslaSim);
-  };
-
-  // Handle number input for Target Total Amount
-  const handleTargetValueChange = (e) => {
-    const value = e.target.value;
-    setTargetValue(value === "" ? "" : Number(value)); 
-  };
 
   // Utility function to display arrows
   const displayArrow = (change) => {
@@ -186,22 +168,26 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       {/* Market Indices */}
       <h2 className="text-2xl font-semibold mb-4">Market Overview</h2>
       <div className="grid grid-cols-1 gap-2 mb-8">
-        {indices.map(index => (
-          <div key={index.name} className="flex justify-between items-center">
-            <div className="flex items-center">
-              <span className={index.change > 0 ? 'text-green-500' : 'text-red-500'}>
-                {displayArrow(index.change)}
-              </span>
-              <span className="ml-2 font-bold">{index.name}</span>
+        {indices.length > 0 ? (
+          indices.map(index => (
+            <div key={index.name} className="flex justify-between items-center">
+              <div className="flex items-center">
+                <span className={index.change > 0 ? 'text-green-500' : 'text-red-500'}>
+                  {displayArrow(index.change)}
+                </span>
+                <span className="ml-2 font-bold">{index.name}</span>
+              </div>
+              <div className="text-right">
+                <span>{index.price?.toFixed(2)}</span>
+                <span className={index.change > 0 ? 'text-green-500 ml-2' : 'text-red-500 ml-2'}>
+                  {index.change > 0 ? `+${index.changePercent?.toFixed(2)}%` : `${index.changePercent?.toFixed(2)}%`}
+                </span>
+              </div>
             </div>
-            <div className="text-right">
-              <span>{index.price.toFixed(2)}</span>
-              <span className={index.change > 0 ? 'text-green-500 ml-2' : 'text-red-500 ml-2'}>
-                {index.change > 0 ? `+${index.changePercent.toFixed(2)}%` : `${index.changePercent.toFixed(2)}%`}
-              </span>
-            </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div>Loading market indices...</div>
+        )}
       </div>
 
       {/* Stock Portfolio Simulator */}
