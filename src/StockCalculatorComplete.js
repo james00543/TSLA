@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa'; // Make sure to install react-icons
 
 const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace with your Finnhub API token
 
@@ -12,25 +13,45 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [targetValue, setTargetValue] = useState(1000000);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [error, setError] = useState(null);
+  const [marketIndices, setMarketIndices] = useState({
+    '^IXIC': { name: 'NASDAQ', price: 0, change: 0 },
+    '^GSPC': { name: 'S&P 500', price: 0, change: 0 },
+    '^DJI': { name: 'Dow Jones', price: 0, change: 0 },
+    '^TNX': { name: '10-Year Treasury', price: 0, change: 0 },
+  });
 
   // Fetch stock prices using REST API
   useEffect(() => {
     const fetchStockData = async () => {
       try {
-        const stockSymbols = ['TSLA', 'TSLL'];
+        const stockSymbols = ['TSLA', 'TSLL', ...Object.keys(marketIndices)];
 
         const stockPromises = stockSymbols.map(symbol =>
           fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_TOKEN}`)
             .then(res => res.json())
-            .then(data => ({ symbol, currentPrice: data.c }))
+            .then(data => ({ symbol, currentPrice: data.c, change: data.dp }))
         );
 
         const stockData = await Promise.all(stockPromises);
 
         setStocks(stocks.map(stock => {
           const updatedStock = stockData.find(s => s.symbol === stock.symbol);
-          return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice } : stock;
+          return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice, change: updatedStock.change } : stock;
         }));
+
+        setMarketIndices(prevIndices => {
+          const updatedIndices = { ...prevIndices };
+          stockData.forEach(data => {
+            if (updatedIndices[data.symbol]) {
+              updatedIndices[data.symbol] = {
+                ...updatedIndices[data.symbol],
+                price: data.currentPrice,
+                change: data.change,
+              };
+            }
+          });
+          return updatedIndices;
+        });
 
       } catch (err) {
         setError('Failed to fetch stock data.');
@@ -141,14 +162,32 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Ticker Section */}
       <div className="bg-gray-900 text-white py-4 mb-4">
-        <div className="grid grid-cols-2 gap-4 px-4">
+        <div className="grid grid-cols-3 gap-4 px-4">
           {stocks.map((stock) => (
             <div key={stock.symbol} className="flex justify-between items-center">
               <div className="flex items-center">
                 <span className="font-bold">{stock.symbol}</span>
               </div>
-              <div className="text-right">
+              <div className="text-right flex items-center">
                 <div>${stock.currentPrice.toFixed(2)}</div>
+                <div className={`ml-2 ${stock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {stock.change >= 0 ? <FaArrowUp /> : <FaArrowDown />}
+                  {Math.abs(stock.change).toFixed(2)}%
+                </div>
+              </div>
+            </div>
+          ))}
+          {Object.entries(marketIndices).map(([symbol, data]) => (
+            <div key={symbol} className="flex justify-between items-center">
+              <div className="flex items-center">
+                <span className="font-bold">{data.name}</span>
+              </div>
+              <div className="text-right flex items-center">
+                <div>${data.price.toFixed(2)}</div>
+                <div className={`ml-2 ${data.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {data.change >= 0 ? <FaArrowUp /> : <FaArrowDown />}
+                  {Math.abs(data.change).toFixed(2)}%
+                </div>
               </div>
             </div>
           ))}
