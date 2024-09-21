@@ -7,7 +7,8 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2500 },
   ]);
-  const [tslaSim, setTslaSim] = useState(2393); // Simulated price for TSLA
+  const [tslaSim, setTslaSim] = useState(2393); // The confirmed simulated price for TSLA
+  const [inputTslaSim, setInputTslaSim] = useState(tslaSim); // Temporary state for user input
   const [targetValue, setTargetValue] = useState(1000000);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [error, setError] = useState(null);
@@ -18,7 +19,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       try {
         const stockSymbols = ['TSLA', 'TSLL'];
 
-        // Fetch prices for stocks
         const stockPromises = stockSymbols.map(symbol =>
           fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_TOKEN}`)
             .then(res => res.json())
@@ -27,7 +27,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
         const stockData = await Promise.all(stockPromises);
 
-        // Update state
         setStocks(stocks.map(stock => {
           const updatedStock = stockData.find(s => s.symbol === stock.symbol);
           return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice } : stock;
@@ -91,7 +90,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       }
     }
 
-    // Set the result with all calculated values for the Goal Seek
     setGoalSeekResult({
       tsla: {
         simPrice: mid.toFixed(2),
@@ -125,14 +123,18 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   // Handle number input for TSLA Simulated Price
   const handleTslaSimChange = (e) => {
     const value = e.target.value;
-    // Allow empty value and set to null, otherwise parse to number
-    setTslaSim(value === "" ? null : Number(value));
+    setInputTslaSim(value === "" ? "" : Number(value));
+  };
+
+  // Update tslaSim when "Submit" button is clicked
+  const handleTslaSimSubmit = () => {
+    setTslaSim(inputTslaSim);
   };
 
   // Handle number input for Target Total Amount
   const handleTargetValueChange = (e) => {
     const value = e.target.value;
-    setTargetValue(value === "" ? "" : Number(value));  // If input is empty, set an empty string, else convert to a number
+    setTargetValue(value === "" ? "" : Number(value)); 
   };
 
   return (
@@ -162,10 +164,16 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </label>
         <input
           type="number"
-          value={tslaSim ?? ""}  // Display empty string when no value is entered
-          onChange={handleTslaSimChange}  // Use the updated handler
+          value={inputTslaSim}
+          onChange={handleTslaSimChange}
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
+        <button
+          onClick={handleTslaSimSubmit}
+          className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
+        >
+          Submit
+        </button>
       </div>
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
@@ -249,14 +257,14 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       <div className="bg-blue-50 p-6 rounded-lg">
         <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
         <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
-        <input
-          type="number"
-          value={targetValue === 0 ? "" : targetValue}  // If 0, show an empty string
-          onChange={handleTargetValueChange}  // Attach the handler
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
+          <input
+            type="number"
+            value={targetValue === 0 ? "" : targetValue}
+            onChange={handleTargetValueChange}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
         <button
           onClick={runGoalSeek}
           className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
@@ -264,9 +272,9 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           Solve
         </button>
         {goalSeekResult && (
-  <div className="mt-8">
-    <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
-    <div className="overflow-x-auto">
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
+            <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
