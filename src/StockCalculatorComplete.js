@@ -5,7 +5,7 @@ const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace wi
 const EnhancedStockCalculatorWithRESTAPI = () => {
   const [stocks, setStocks] = useState([
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
-    { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2500 },
+    { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2515 },
   ]);
   const [tslaSim, setTslaSim] = useState(2393); // The confirmed simulated price for TSLA
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim); // Temporary state for user input
