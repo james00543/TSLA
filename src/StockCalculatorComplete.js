@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
+// Helper function to format currency with commas
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+};
+
 const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace with your Finnhub API token
 
 const EnhancedStockCalculatorWithRESTAPI = () => {
@@ -7,11 +12,14 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2515 },
   ]);
-  const [tslaSim, setTslaSim] = useState(2393); // The confirmed simulated price for TSLA
-  const [inputTslaSim, setInputTslaSim] = useState(tslaSim); // Temporary state for user input
+  const [tslaSim, setTslaSim] = useState(2393);
+  const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
   const [targetValue, setTargetValue] = useState(1000000);
+  const [targetPnL, setTargetPnL] = useState(20);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
+  const [goalSeekMode, setGoalSeekMode] = useState('amount'); // Mode: 'amount' or 'pnl'
   const [error, setError] = useState(null);
+  const [portfolioValue, setPortfolioValue] = useState(0);
 
   // Fetch stock prices using REST API
   useEffect(() => {
@@ -32,6 +40,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice } : stock;
         }));
 
+        // Calculate current portfolio value
+        const totalPortfolioValue = stockData.reduce((acc, stock) => {
+          const matchingStock = stocks.find(s => s.symbol === stock.symbol);
+          return acc + (stock.currentPrice * matchingStock.qty);
+        }, 0);
+        setPortfolioValue(totalPortfolioValue);
+
       } catch (err) {
         setError('Failed to fetch stock data.');
       }
@@ -42,7 +57,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const calculateValues = (tslaPrice) => {
     if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) {
-      return { tsla: null, tsll: null, total: null };  // Return null values if invalid input
+      return { tsla: null, tsll: null, total: null };
     }
 
     const tsla = {
@@ -83,10 +98,18 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       mid = (low + high) / 2;
       result = calculateValues(mid);
 
-      if (result.total.amount > targetValue) {
-        high = mid;
+      if (goalSeekMode === 'amount') {
+        if (result.total.amount > targetValue) {
+          high = mid;
+        } else {
+          low = mid;
+        }
       } else {
-        low = mid;
+        if ((result.total.pnl * 100) > targetPnL) {
+          high = mid;
+        } else {
+          low = mid;
+        }
       }
     }
 
@@ -108,6 +131,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       total: {
         cost: result.total.cost.toFixed(2),
         amount: result.total.amount.toFixed(2),
+        pnl: (result.total.pnl * 100).toFixed(2),
       }
     });
   };
@@ -120,25 +144,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   const { tsla, tsll, total } = calculateValues(tslaSim);
 
-  // Handle number input for TSLA Simulated Price
-  const handleTslaSimChange = (e) => {
-    const value = e.target.value;
-    setInputTslaSim(value === "" ? "" : Number(value));
-  };
-
-  // Update tslaSim when "Submit" button is clicked
-  const handleTslaSimSubmit = () => {
-    setTslaSim(inputTslaSim);
-  };
-
-  // Handle number input for Target Total Amount
-  const handleTargetValueChange = (e) => {
-    const value = e.target.value;
-    setTargetValue(value === "" ? "" : Number(value)); 
-  };
-
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+    <div className="container mx-auto p-4">
+      {/* Current Portfolio Value */}
+      <div className="text-2xl font-semibold mb-4 text-center bg-green-50 py-2">
+        Current Portfolio Value: {formatCurrency(portfolioValue)}
+      </div>
+
       {/* Ticker Section */}
       <div className="bg-gray-900 text-white py-4 mb-4">
         <div className="grid grid-cols-2 gap-4 px-4">
@@ -148,7 +160,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
                 <span className="font-bold">{stock.symbol}</span>
               </div>
               <div className="text-right">
-                <div>${stock.currentPrice.toFixed(2)}</div>
+                <div>{formatCurrency(stock.currentPrice)}</div>
               </div>
             </div>
           ))}
@@ -156,178 +168,159 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Portfolio Simulator */}
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
-
-      <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          TSLA Simulated Price:
-        </label>
+      <div className="section mb-8 bg-blue-50 p-4 rounded">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
+        <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
         <input
           type="number"
           value={inputTslaSim}
-          onChange={handleTslaSimChange}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          onChange={(e) => setInputTslaSim(Number(e.target.value))}
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-4"
         />
         <button
-          onClick={handleTslaSimSubmit}
+          onClick={() => setTslaSim(inputTslaSim)}
           className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
         >
           Submit
         </button>
       </div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
-        {stocks.map((stock, index) => (
-          <div key={stock.symbol} className="mb-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-xl font-medium mb-3">{stock.symbol}</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Average Cost:</label>
-                <input
-                  type="number"
-                  value={stock.avgCost}
-                  onChange={(e) => handleStockChange(index, 'avgCost', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity:</label>
-                <input
-                  type="number"
-                  value={stock.qty}
-                  onChange={(e) => handleStockChange(index, 'qty', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Results</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Symbol
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avg Cost
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sim Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sim P&L %
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cost
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
+      {/* Stock Details Table */}
+      <div className="section bg-gray-50 p-4 rounded mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Cost</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sim Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sim P&L %</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {[tsla, tsll].map((stock) => (
+              <tr key={stock.symbol}>
+                <td className="px-6 py-4 whitespace-nowrap">{stock.symbol}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(stock.avgCost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(stock.simPrice)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{(stock.simPnl * 100).toFixed(2)}%</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(stock.cost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(stock.amount)}</td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {[tsla, tsll].map((stock) => (
-                <tr key={stock.symbol}>
-                  <td className="px-6 py-4 whitespace-nowrap">{stock.symbol}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.avgCost.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.simPrice?.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{(stock.simPnl * 100).toFixed(2)}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.cost?.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">${stock.amount?.toFixed(2)}</td>
-                </tr>
-              ))}
-              <tr className="font-bold">
-                <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>
-                  Total:
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">${total.cost?.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${total.amount?.toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            ))}
+            <tr className="font-bold">
+              <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>Total:</td>
+              <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(total.cost)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(total.amount)}</td>
+            </tr>
+          </tbody>
+        </table>
         <div className="mt-4 text-xl font-semibold">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
       </div>
 
-      <div className="bg-blue-50 p-6 rounded-lg">
+      {/* Goal Seek Section */}
+      <div className="section bg-blue-50 p-4 rounded mb-8">
         <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
-          <input
-            type="number"
-            value={targetValue === 0 ? "" : targetValue}
-            onChange={handleTargetValueChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
+        <div className="flex mb-4">
+          <label className="mr-4">
+            <input
+              type="radio"
+              value="amount"
+              checked={goalSeekMode === 'amount'}
+              onChange={() => setGoalSeekMode('amount')}
+              className="mr-2"
+            />
+            Target Total Amount
+          </label>
+          <label>
+            <input
+              type="radio"
+              value="pnl"
+              checked={goalSeekMode === 'pnl'}
+              onChange={() => setGoalSeekMode('pnl')}
+              className="mr-2"
+            />
+            Target P&L Percentage
+          </label>
         </div>
+
+        {goalSeekMode === 'amount' ? (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
+            <input
+              type="number"
+              value={targetValue || ''}  // Show an empty string when targetValue is 0
+              onChange={(e) => setTargetValue(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        ) : (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target P&L Percentage:</label>
+            <input
+              type="number"
+              value={targetPnL || ''}  // Show an empty string when targetPnL is 0
+              onChange={(e) => setTargetPnL(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        )}
+
         <button
           onClick={runGoalSeek}
           className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
         >
           Solve
         </button>
-        {goalSeekResult && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
-            <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Symbol
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Avg Cost
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Sim Price
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Sim P&L %
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Cost
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Amount
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          <tr>
-            <td className="px-6 py-4 whitespace-nowrap">TSLA</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsla.avgCost}</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsla.simPrice}</td>
-            <td className="px-6 py-4 whitespace-nowrap">{goalSeekResult.tsla.simPnl}%</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsla.cost}</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsla.amount}</td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4 whitespace-nowrap">TSLL</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsll.avgCost}</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsll.simPrice}</td>
-            <td className="px-6 py-4 whitespace-nowrap">{goalSeekResult.tsll.simPnl}%</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsll.cost}</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.tsll.amount}</td>
-          </tr>
-          <tr className="font-bold">
-            <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>
-              Total:
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.total.cost}</td>
-            <td className="px-6 py-4 whitespace-nowrap">${goalSeekResult.total.amount}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
       </div>
+
+      {/* Goal Seek Results */}
+      {goalSeekResult && (
+        <div className="section bg-gray-50 p-4 rounded">
+          <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Cost</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sim Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sim P&L %</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap">TSLA</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsla.avgCost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsla.simPrice)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{goalSeekResult.tsla.simPnl}%</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsla.cost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsla.amount)}</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap">TSLL</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsll.avgCost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsll.simPrice)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{goalSeekResult.tsll.simPnl}%</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsll.cost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.tsll.amount)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>Total:</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.total.cost)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(goalSeekResult.total.amount)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>Total P&L:</td>
+                <td className="px-6 py-4 whitespace-nowrap" colSpan={2}>{goalSeekResult.total.pnl}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

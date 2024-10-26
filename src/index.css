@@ -14,3 +14,69 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* Add this CSS to your project */
+
+.container {
+  padding: 1rem;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+.section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+}
+
+.bg-blue-50 {
+  background-color: #ebf8ff;
+}
+
+.bg-green-50 {
+  background-color: #f0fdf4;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.text-center {
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 95%;
+    padding: 0.5rem;
+  }
+
+  .text-lg {
+    font-size: 1rem; /* Smaller font size for mobile */
+  }
+
+  .text-xl {
+    font-size: 1.25rem;
+  }
+
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+
+  .px-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .py-3 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .whitespace-nowrap {
+    white-space: normal;
+  }
+}
