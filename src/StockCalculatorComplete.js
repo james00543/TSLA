@@ -13,6 +13,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [targetPnL, setTargetPnL] = useState(20);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [goalSeekMode, setGoalSeekMode] = useState('amount');
+  const [portfolioValue, setPortfolioValue] = useState(0);
   const [error, setError] = useState(null);
 
   // Fetch stock prices using REST API
@@ -29,10 +30,19 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
         const stockData = await Promise.all(stockPromises);
 
-        setStocks(stocks.map(stock => {
+        const updatedStocks = stocks.map(stock => {
           const updatedStock = stockData.find(s => s.symbol === stock.symbol);
           return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice } : stock;
-        }));
+        });
+        
+        setStocks(updatedStocks);
+
+        // Calculate current portfolio value
+        const totalPortfolioValue = updatedStocks.reduce(
+          (acc, stock) => acc + stock.currentPrice * stock.qty,
+          0
+        );
+        setPortfolioValue(totalPortfolioValue);
 
       } catch (err) {
         setError('Failed to fetch stock data.');
@@ -138,8 +148,13 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+      {/* Current Portfolio Value */}
+      <div className="section bg-green-50 text-2xl font-semibold text-center mb-6 py-4">
+        Current Portfolio Value: {formatCurrency(portfolioValue)}
+      </div>
+
       {/* Ticker Section */}
-      <div className="bg-gray-900 text-white py-4 mb-4">
+      <div className="section bg-gray-900 text-white py-4 mb-4">
         <div className="grid grid-cols-2 gap-4 px-4">
           {stocks.map((stock) => (
             <div key={stock.symbol} className="flex justify-between items-center">
@@ -155,16 +170,16 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Portfolio Simulator */}
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
+      <div className="section bg-blue-50 p-4 rounded-md mb-8">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
 
-      <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           TSLA Simulated Price:
         </label>
         <input
           type="number"
-          value={inputTslaSim}
-          onChange={(e) => setInputTslaSim(Number(e.target.value))}
+          value={inputTslaSim || ''}
+          onChange={(e) => setInputTslaSim(e.target.value === '' ? '' : Number(e.target.value))}
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
         <button
@@ -176,7 +191,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Details Table */}
-      <div className="mb-8">
+      <div className="section bg-gray-100 p-4 rounded-md mb-8">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
@@ -212,8 +227,8 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </div>
       </div>
 
-      {/* Goal Seek Options */}
-      <div className="mb-8">
+      {/* Goal Seek Section */}
+      <div className="section bg-blue-50 p-4 rounded-md mb-8">
         <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
         <div className="flex justify-center mb-4">
           <label className="mr-4">
@@ -270,7 +285,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
       {/* Goal Seek Results */}
       {goalSeekResult && (
-        <div className="mt-8">
+        <div className="section bg-gray-100 p-4 rounded-md mb-8">
           <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
           <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
             <thead className="bg-gray-50">
