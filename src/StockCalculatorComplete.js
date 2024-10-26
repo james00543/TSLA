@@ -185,6 +185,36 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </button>
       </div>
 
+      {/* Stock Input Section */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Update Stock Details</h2>
+        {stocks.map((stock, index) => (
+          <div key={stock.symbol} className="mb-6 p-4 bg-gray-50 rounded-md">
+            <h3 className="text-xl font-medium mb-3">{stock.symbol}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Average Cost:</label>
+                <input
+                  type="number"
+                  value={stock.avgCost}
+                  onChange={(e) => handleStockChange(index, 'avgCost', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity:</label>
+                <input
+                  type="number"
+                  value={stock.qty}
+                  onChange={(e) => handleStockChange(index, 'qty', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Stock Details Table */}
       <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
