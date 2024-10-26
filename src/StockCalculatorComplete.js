@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './App.css'; // Import custom CSS for styling
 
-const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';
+const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace with your Finnhub API token
 
 const EnhancedStockCalculatorWithRESTAPI = () => {
   const [stocks, setStocks] = useState([
@@ -15,12 +14,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [goalSeekMode, setGoalSeekMode] = useState('amount');
   const [error, setError] = useState(null);
-  const [portfolioValue, setPortfolioValue] = useState(0);
-
-  // Utility function to format currency with commas and no decimals
-  const formatCurrency = (value) => {
-    return `$${Math.round(value).toLocaleString('en-US')}`;
-  };
 
   // Fetch stock prices using REST API
   useEffect(() => {
@@ -40,13 +33,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           const updatedStock = stockData.find(s => s.symbol === stock.symbol);
           return updatedStock ? { ...stock, currentPrice: updatedStock.currentPrice } : stock;
         }));
-
-        // Calculate current portfolio value
-        const totalPortfolioValue = stockData.reduce((acc, stock) => {
-          const matchingStock = stocks.find(s => s.symbol === stock.symbol);
-          return acc + (stock.currentPrice * matchingStock.qty);
-        }, 0);
-        setPortfolioValue(totalPortfolioValue);
 
       } catch (err) {
         setError('Failed to fetch stock data.');
@@ -143,17 +129,17 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     setStocks(newStocks);
   };
 
+  const formatCurrency = (value) => {
+    if (!value) return "$0";
+    return `$${Math.round(value).toLocaleString()}`;
+  };
+
   const { tsla, tsll, total } = calculateValues(tslaSim);
 
   return (
-    <div className="container mx-auto p-4">
-      {/* Current Portfolio Value */}
-      <div className="section bg-green-50 text-2xl font-semibold text-center mb-6 p-2 rounded">
-        Current Portfolio Value: {formatCurrency(portfolioValue)}
-      </div>
-
+    <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Ticker Section */}
-      <div className="section bg-gray-900 text-white py-4 mb-4 rounded">
+      <div className="bg-gray-900 text-white py-4 mb-4">
         <div className="grid grid-cols-2 gap-4 px-4">
           {stocks.map((stock) => (
             <div key={stock.symbol} className="flex justify-between items-center">
@@ -169,15 +155,17 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Portfolio Simulator */}
-      <div className="section bg-blue-50 p-4 mb-4 rounded">
-        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
 
-        <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
+      <div className="mb-8">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          TSLA Simulated Price:
+        </label>
         <input
           type="number"
           value={inputTslaSim}
           onChange={(e) => setInputTslaSim(Number(e.target.value))}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-4"
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
         <button
           onClick={() => setTslaSim(inputTslaSim)}
@@ -188,46 +176,46 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Details Table */}
-      <div className="section bg-gray-50 p-4 mb-4 rounded">
+      <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Symbol</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Avg Cost</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Sim Price</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Sim P&L %</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Cost</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Amount</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 text-center">
               {[tsla, tsll].map((stock) => (
                 <tr key={stock.symbol}>
-                  <td className="px-2 py-2">{stock.symbol}</td>
-                  <td className="px-2 py-2">{formatCurrency(stock.avgCost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(stock.simPrice)}</td>
-                  <td className="px-2 py-2">{(stock.simPnl * 100).toFixed(2)}%</td>
-                  <td className="px-2 py-2">{formatCurrency(stock.cost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(stock.amount)}</td>
+                  <td className="px-2 py-2 border border-gray-300">{stock.symbol}</td>
+                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.avgCost)}</td>
+                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.simPrice)}</td>
+                  <td className="px-2 py-2 border border-gray-300">{(stock.simPnl * 100).toFixed(2)}%</td>
+                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
+                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.amount)}</td>
                 </tr>
               ))}
               <tr className="font-bold">
-                <td className="px-2 py-2" colSpan={4}>Total:</td>
-                <td className="px-2 py-2">{formatCurrency(total.cost)}</td>
-                <td className="px-2 py-2">{formatCurrency(total.amount)}</td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.amount)}</td>
               </tr>
             </tbody>
           </table>
+          <div className="mt-4 text-xl font-semibold text-center">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
         </div>
-        <div className="mt-4 text-xl font-semibold">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
       </div>
 
-      {/* Goal Seek Section */}
-      <div className="section bg-blue-50 p-4 mb-4 rounded">
+      {/* Goal Seek Options */}
+      <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
-        <div className="flex mb-4">
+        <div className="flex justify-center mb-4">
           <label className="mr-4">
             <input
               type="radio"
@@ -282,49 +270,47 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
       {/* Goal Seek Results */}
       {goalSeekResult && (
-        <div className="section bg-gray-50 p-4 mb-4 rounded">
+        <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Symbol</th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Avg Cost</th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Sim Price</th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Sim P&L %</th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Cost</th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
-                  <td className="px-2 py-2">TSLA</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsla.avgCost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsla.simPrice)}</td>
-                  <td className="px-2 py-2">{goalSeekResult.tsla.simPnl}%</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsla.cost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsla.amount)}</td>
-                </tr>
-                <tr>
-                  <td className="px-2 py-2">TSLL</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsll.avgCost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsll.simPrice)}</td>
-                  <td className="px-2 py-2">{goalSeekResult.tsll.simPnl}%</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsll.cost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.tsll.amount)}</td>
-                </tr>
-                <tr className="font-bold">
-                  <td className="px-2 py-2" colSpan={4}>Total:</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.total.cost)}</td>
-                  <td className="px-2 py-2">{formatCurrency(goalSeekResult.total.amount)}</td>
-                </tr>
-                <tr className="font-bold">
-                  <td className="px-2 py-2" colSpan={4}>Total P&L:</td>
-                  <td className="px-2 py-2" colSpan={2}>{goalSeekResult.total.pnl}%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200 text-center">
+              <tr>
+                <td className="px-2 py-2 border border-gray-300">TSLA</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.simPrice)}</td>
+                <td className="px-2 py-2 border border-gray-300">{goalSeekResult.tsla.simPnl}%</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.amount)}</td>
+              </tr>
+              <tr>
+                <td className="px-2 py-2 border border-gray-300">TSLL</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.simPrice)}</td>
+                <td className="px-2 py-2 border border-gray-300">{goalSeekResult.tsll.simPnl}%</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.amount)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.total.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.total.amount)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total P&L:</td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={2}>{goalSeekResult.total.pnl}%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
     </div>
