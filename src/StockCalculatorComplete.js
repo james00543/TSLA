@@ -17,9 +17,9 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [error, setError] = useState(null);
   const [portfolioValue, setPortfolioValue] = useState(0);
 
-  // Utility function to format currency with commas
+  // Utility function to format currency with commas and no decimals
   const formatCurrency = (value) => {
-    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    return `$${Math.round(value).toLocaleString('en-US')}`;
   };
 
   // Fetch stock prices using REST API
@@ -116,22 +116,22 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
     setGoalSeekResult({
       tsla: {
-        simPrice: mid.toFixed(2),
-        avgCost: result.tsla.avgCost.toFixed(2),
+        simPrice: Math.round(mid),
+        avgCost: Math.round(result.tsla.avgCost),
         simPnl: (result.tsla.simPnl * 100).toFixed(2),
-        cost: result.tsla.cost.toFixed(2),
-        amount: result.tsla.amount.toFixed(2),
+        cost: Math.round(result.tsla.cost),
+        amount: Math.round(result.tsla.amount),
       },
       tsll: {
-        simPrice: result.tsll.simPrice.toFixed(2),
-        avgCost: result.tsll.avgCost.toFixed(2),
+        simPrice: Math.round(result.tsll.simPrice),
+        avgCost: Math.round(result.tsll.avgCost),
         simPnl: (result.tsll.simPnl * 100).toFixed(2),
-        cost: result.tsll.cost.toFixed(2),
-        amount: result.tsll.amount.toFixed(2),
+        cost: Math.round(result.tsll.cost),
+        amount: Math.round(result.tsll.amount),
       },
       total: {
-        cost: result.total.cost.toFixed(2),
-        amount: result.total.amount.toFixed(2),
+        cost: Math.round(result.total.cost),
+        amount: Math.round(result.total.amount),
         pnl: (result.total.pnl * 100).toFixed(2),
       }
     });
