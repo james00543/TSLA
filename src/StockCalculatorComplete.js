@@ -4,8 +4,8 @@ const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace wi
 
 const EnhancedStockCalculatorWithRESTAPI = () => {
   const [stocks, setStocks] = useState([
-    { symbol: 'TSLA', currentPrice: 0, avgCost: 210, qty: 181 },
-    { symbol: 'TSLL', currentPrice: 0, avgCost: 14, qty: 2515 },
+    { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
+    { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2515 },
   ]);
   const [tslaSim, setTslaSim] = useState(2393);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
@@ -13,8 +13,8 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [targetPnL, setTargetPnL] = useState(20);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [goalSeekMode, setGoalSeekMode] = useState('amount');
-  const [portfolioValue, setPortfolioValue] = useState(0);
   const [error, setError] = useState(null);
+  const [portfolioValue, setPortfolioValue] = useState(0);
 
   // Fetch stock prices using REST API
   useEffect(() => {
@@ -131,6 +131,12 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     });
   };
 
+  const handleStockChange = (index, field, value) => {
+    const newStocks = [...stocks];
+    newStocks[index][field] = parseFloat(value);
+    setStocks(newStocks);
+  };
+
   const formatCurrency = (value) => {
     if (!value) return "$0";
     return `$${Math.round(value).toLocaleString()}`;
@@ -141,7 +147,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Current Portfolio Value */}
-      <div className="bg-green-100 text-2xl font-semibold text-center mb-6 p-4 rounded-md">
+      <div className="section bg-green-50 text-2xl font-semibold text-center mb-6 p-4 rounded-md">
         Current Portfolio Value: {formatCurrency(portfolioValue)}
       </div>
 
@@ -154,7 +160,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
                 <span className="font-bold">{stock.symbol}</span>
               </div>
               <div className="text-right">
-                <div>{formatCurrency(stock.currentPrice)}</div>
+                {formatCurrency(stock.currentPrice)}
               </div>
             </div>
           ))}
@@ -169,11 +175,11 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           type="number"
           value={inputTslaSim || ''}
           onChange={(e) => setInputTslaSim(e.target.value === '' ? '' : Number(e.target.value))}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-4"
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
         <button
           onClick={() => setTslaSim(inputTslaSim)}
-          className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
+          className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
         >
           Submit
         </button>
@@ -212,6 +218,62 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           </tbody>
         </table>
         <div className="mt-4 text-xl font-semibold text-center">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
+      </div>
+
+      {/* Goal Seek Section */}
+      <div className="section bg-blue-50 p-4 rounded-md mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
+        <div className="flex justify-center mb-4">
+          <label className="mr-4">
+            <input
+              type="radio"
+              value="amount"
+              checked={goalSeekMode === 'amount'}
+              onChange={() => setGoalSeekMode('amount')}
+              className="mr-2"
+            />
+            Target Total Amount
+          </label>
+          <label>
+            <input
+              type="radio"
+              value="pnl"
+              checked={goalSeekMode === 'pnl'}
+              onChange={() => setGoalSeekMode('pnl')}
+              className="mr-2"
+            />
+            Target P&L Percentage
+          </label>
+        </div>
+
+        {goalSeekMode === 'amount' ? (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
+            <input
+              type="number"
+              value={targetValue || ''}
+              onChange={(e) => setTargetValue(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        ) : (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target P&L Percentage:</label>
+            <input
+              type="number"
+              value={targetPnL || ''}
+              onChange={(e) => setTargetPnL(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        )}
+
+        <button
+          onClick={runGoalSeek}
+          className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
+        >
+          Solve
+        </button>
       </div>
 
       {/* Goal Seek Results */}
