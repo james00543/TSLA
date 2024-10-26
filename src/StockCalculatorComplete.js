@@ -10,10 +10,9 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   const [tslaSim, setTslaSim] = useState(2393);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
   const [targetValue, setTargetValue] = useState(1000000);
-  const [targetPnL, setTargetPnL] = useState(20);
+  const [targetPnL, setTargetPnL] = useState(100);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [goalSeekMode, setGoalSeekMode] = useState('amount');
-  const [error, setError] = useState(null);
   const [portfolioValue, setPortfolioValue] = useState(0);
 
   // Fetch stock prices using REST API
@@ -43,12 +42,18 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         setPortfolioValue(totalPortfolioValue);
 
       } catch (err) {
-        setError('Failed to fetch stock data.');
+        console.error('Failed to fetch stock data.');
       }
     };
 
     fetchStockData();
   }, []);
+
+  const handleStockChange = (index, field, value) => {
+    const newStocks = [...stocks];
+    newStocks[index][field] = parseFloat(value);
+    setStocks(newStocks);
+  };
 
   const calculateValues = (tslaPrice) => {
     if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) {
@@ -60,6 +65,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       simPrice: tslaPrice,
       simPnl: (tslaPrice - stocks[0].avgCost) / stocks[0].avgCost,
       cost: stocks[0].avgCost * stocks[0].qty,
+      currentMarketValue: stocks[0].currentPrice * stocks[0].qty,
       amount: tslaPrice * stocks[0].qty,
     };
 
@@ -71,12 +77,14 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       simPrice: tsllPrice,
       simPnl: (tsllPrice - stocks[1].avgCost) / stocks[1].avgCost,
       cost: stocks[1].avgCost * stocks[1].qty,
+      currentMarketValue: stocks[1].currentPrice * stocks[1].qty,
       amount: tsllPrice * stocks[1].qty,
     };
 
     const total = {
       amount: tsla.amount + tsll.amount,
       cost: tsla.cost + tsll.cost,
+      currentMarketValue: tsla.currentMarketValue + tsll.currentMarketValue,
       pnl: (tsla.amount + tsll.amount - (tsla.cost + tsll.cost)) / (tsla.cost + tsll.cost),
     };
 
@@ -111,30 +119,27 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     setGoalSeekResult({
       tsla: {
         simPrice: Math.round(mid),
-        avgCost: Math.round(result.tsla.avgCost),
+        avgCost: result.tsla.avgCost.toFixed(2),
         simPnl: (result.tsla.simPnl * 100).toFixed(2),
         cost: Math.round(result.tsla.cost),
+        currentMarketValue: Math.round(result.tsla.currentMarketValue),
         amount: Math.round(result.tsla.amount),
       },
       tsll: {
         simPrice: Math.round(result.tsll.simPrice),
-        avgCost: Math.round(result.tsll.avgCost),
+        avgCost: result.tsll.avgCost.toFixed(2),
         simPnl: (result.tsll.simPnl * 100).toFixed(2),
         cost: Math.round(result.tsll.cost),
+        currentMarketValue: Math.round(result.tsll.currentMarketValue),
         amount: Math.round(result.tsll.amount),
       },
       total: {
         cost: Math.round(result.total.cost),
+        currentMarketValue: Math.round(result.total.currentMarketValue),
         amount: Math.round(result.total.amount),
         pnl: (result.total.pnl * 100).toFixed(2),
       }
     });
-  };
-
-  const handleStockChange = (index, field, value) => {
-    const newStocks = [...stocks];
-    newStocks[index][field] = parseFloat(value);
-    setStocks(newStocks);
   };
 
   const formatCurrency = (value) => {
@@ -146,30 +151,9 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-      {/* Current Portfolio Value */}
-      <div className="section bg-green-50 text-2xl font-semibold text-center mb-6 p-4 rounded-md">
-        Current Portfolio Value: {formatCurrency(portfolioValue)}
-      </div>
-
-      {/* Ticker Section */}
-      <div className="section bg-gray-900 text-white py-4 mb-4 rounded-md">
-        <div className="grid grid-cols-2 gap-4 px-4">
-          {stocks.map((stock) => (
-            <div key={stock.symbol} className="flex justify-between items-center">
-              <div className="flex items-center">
-                <span className="font-bold">{stock.symbol}</span>
-              </div>
-              <div className="text-right">
-                {formatCurrency(stock.currentPrice)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Stock Portfolio Simulator */}
       <div className="section bg-blue-50 p-4 rounded-md mb-8">
-        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Stock Portfolio Simulator</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Tesla Stock Portfolio Simulator with Leveraged ETF</h1>
         <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
         <input
           type="number"
@@ -185,64 +169,56 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </button>
       </div>
 
-      {/* Stock Input Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Update Stock Details</h2>
-        {stocks.map((stock, index) => (
-          <div key={stock.symbol} className="mb-6 p-4 bg-gray-50 rounded-md">
-            <h3 className="text-xl font-medium mb-3">{stock.symbol}</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Average Cost:</label>
-                <input
-                  type="number"
-                  value={stock.avgCost}
-                  onChange={(e) => handleStockChange(index, 'avgCost', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity:</label>
-                <input
-                  type="number"
-                  value={stock.qty}
-                  onChange={(e) => handleStockChange(index, 'qty', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Stock Details Table */}
+      {/* Stock Details Table with Inline Editing */}
       <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
         <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Quantity</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-center">
-            {[tsla, tsll].map((stock) => (
+            {[tsla, tsll].map((stock, index) => (
               <tr key={stock.symbol}>
                 <td className="px-2 py-2 border border-gray-300">{stock.symbol}</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.currentPrice)}</td>
+                <td className="px-2 py-2 border border-gray-300">
+                  <input
+                    type="number"
+                    value={stock.avgCost}
+                    onChange={(e) => handleStockChange(index, 'avgCost', e.target.value)}
+                    className="w-full p-1 border border-gray-300 rounded-md text-center"
+                  />
+                </td>
+                <td className="px-2 py-2 border border-gray-300">
+                  <input
+                    type="number"
+                    value={stock.qty}
+                    onChange={(e) => handleStockChange(index, 'qty', e.target.value)}
+                    className="w-full p-1 border border-gray-300 rounded-md text-center"
+                  />
+                </td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.currentMarketValue)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.simPrice)}</td>
                 <td className="px-2 py-2 border border-gray-300">{(stock.simPnl * 100).toFixed(2)}%</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.amount)}</td>
               </tr>
             ))}
             <tr className="font-bold">
               <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
               <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.cost)}</td>
+              <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.currentMarketValue)}</td>
+              <td className="px-2 py-2 border border-gray-300" colSpan={2}></td>
               <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.amount)}</td>
             </tr>
           </tbody>
@@ -306,7 +282,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         </button>
       </div>
 
-      {/* Goal Seek Results */}
+      {/* Goal Seek Results Table */}
       {goalSeekResult && (
         <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
           <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
@@ -314,38 +290,51 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-center">
               <tr>
                 <td className="px-2 py-2 border border-gray-300">TSLA</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stocks[0].currentPrice)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">
+                  {formatCurrency(stocks[0].currentPrice * stocks[0].qty)}
+                </td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.simPrice)}</td>
                 <td className="px-2 py-2 border border-gray-300">{goalSeekResult.tsla.simPnl}%</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.cost)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsla.amount)}</td>
               </tr>
               <tr>
                 <td className="px-2 py-2 border border-gray-300">TSLL</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stocks[1].currentPrice)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">
+                  {formatCurrency(stocks[1].currentPrice * stocks[1].qty)}
+                </td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.simPrice)}</td>
                 <td className="px-2 py-2 border border-gray-300">{goalSeekResult.tsll.simPnl}%</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.cost)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.tsll.amount)}</td>
               </tr>
               <tr className="font-bold">
-                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={3}>Total:</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.total.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">
+                  {formatCurrency(stocks[0].currentPrice * stocks[0].qty + stocks[1].currentPrice * stocks[1].qty)}
+                </td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={1}></td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={1}>
+                  {goalSeekResult.total.pnl}%
+                </td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(goalSeekResult.total.amount)}</td>
-              </tr>
-              <tr className="font-bold">
-                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total P&L:</td>
-                <td className="px-2 py-2 border border-gray-300" colSpan={2}>{goalSeekResult.total.pnl}%</td>
               </tr>
             </tbody>
           </table>
