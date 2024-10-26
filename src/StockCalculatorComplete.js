@@ -180,101 +180,43 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       </div>
 
       {/* Stock Details Table */}
-      <div className="section bg-gray-50 p-4 rounded-md mb-8">
+      <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
+        <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Amount</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200 text-center">
+            {[tsla, tsll].map((stock) => (
+              <tr key={stock.symbol}>
+                <td className="px-2 py-2 border border-gray-300">{stock.symbol}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.avgCost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.simPrice)}</td>
+                <td className="px-2 py-2 border border-gray-300">{(stock.simPnl * 100).toFixed(2)}%</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
+                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.amount)}</td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-center">
-              {[tsla, tsll].map((stock) => (
-                <tr key={stock.symbol}>
-                  <td className="px-2 py-2 border border-gray-300">{stock.symbol}</td>
-                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.avgCost)}</td>
-                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.simPrice)}</td>
-                  <td className="px-2 py-2 border border-gray-300">{(stock.simPnl * 100).toFixed(2)}%</td>
-                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
-                  <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.amount)}</td>
-                </tr>
-              ))}
-              <tr className="font-bold">
-                <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.cost)}</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.amount)}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="mt-4 text-xl font-semibold text-center">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
-        </div>
-      </div>
-
-      {/* Goal Seek Section */}
-      <div className="section bg-blue-50 p-4 rounded-md mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Goal Seek</h2>
-        <div className="flex justify-center mb-4">
-          <label className="mr-4">
-            <input
-              type="radio"
-              value="amount"
-              checked={goalSeekMode === 'amount'}
-              onChange={() => setGoalSeekMode('amount')}
-              className="mr-2"
-            />
-            Target Total Amount
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="pnl"
-              checked={goalSeekMode === 'pnl'}
-              onChange={() => setGoalSeekMode('pnl')}
-              className="mr-2"
-            />
-            Target P&L Percentage
-          </label>
-        </div>
-
-        {goalSeekMode === 'amount' ? (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Total Amount:</label>
-            <input
-              type="number"
-              value={targetValue || ''}
-              onChange={(e) => setTargetValue(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        ) : (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target P&L Percentage:</label>
-            <input
-              type="number"
-              value={targetPnL || ''}
-              onChange={(e) => setTargetPnL(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        )}
-
-        <button
-          onClick={runGoalSeek}
-          className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
-        >
-          Solve
-        </button>
+            ))}
+            <tr className="font-bold">
+              <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
+              <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.cost)}</td>
+              <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.amount)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="mt-4 text-xl font-semibold text-center">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
       </div>
 
       {/* Goal Seek Results */}
       {goalSeekResult && (
-        <div className="section bg-gray-50 p-4 rounded-md mb-8">
+        <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
           <h2 className="text-2xl font-bold mb-6 text-center">Goal Seek Results</h2>
           <table className="min-w-full border-collapse border border-gray-300 divide-y divide-gray-200">
             <thead className="bg-gray-50">
