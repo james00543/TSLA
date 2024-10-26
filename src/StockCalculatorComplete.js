@@ -218,12 +218,14 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
               <td className="px-2 py-2 border border-gray-300" colSpan={4}>Total:</td>
               <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.cost)}</td>
               <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.currentMarketValue)}</td>
-              <td className="px-2 py-2 border border-gray-300" colSpan={2}></td>
+              <td className="px-2 py-2 border border-gray-300" colSpan={1}></td>
+                <td className="px-2 py-2 border border-gray-300" colSpan={1}>
+                {(total.pnl * 100).toFixed(2)}%
+                </td>
               <td className="px-2 py-2 border border-gray-300">{formatCurrency(total.amount)}</td>
             </tr>
           </tbody>
         </table>
-        <div className="mt-4 text-xl font-semibold text-center">Total P&L: {(total.pnl * 100).toFixed(2)}%</div>
       </div>
 
       {/* Goal Seek Section */}
