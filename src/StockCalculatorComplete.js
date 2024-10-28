@@ -7,7 +7,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2515 },
   ]);
-  const [tslaSim, setTslaSim] = useState(2357.702141183894);
+  const [tslaSim, setTslaSim] = useState(2345.1052549365);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
   const [targetValue, setTargetValue] = useState(1000000);
   const [targetPnL, setTargetPnL] = useState(100);
@@ -184,12 +184,12 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
               <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Qty</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Quantity</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Market Value</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Sim Amount</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-center">
@@ -302,7 +302,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
                 <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Market Value</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
