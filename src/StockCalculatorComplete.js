@@ -7,7 +7,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2515 },
   ]);
-  const [tslaSim, setTslaSim] = useState(2393);
+  const [tslaSim, setTslaSim] = useState(2357.702141183894);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
   const [targetValue, setTargetValue] = useState(1000000);
   const [targetPnL, setTargetPnL] = useState(100);
@@ -62,7 +62,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
     const tsla = {
       ...stocks[0],
-      simPrice: tslaPrice,
+      simPrice: tslaPrice.toFixed(2),
       simPnl: (tslaPrice - stocks[0].avgCost) / stocks[0].avgCost,
       cost: stocks[0].avgCost * stocks[0].qty,
       currentMarketValue: stocks[0].currentPrice * stocks[0].qty,
@@ -74,7 +74,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
     const tsll = {
       ...stocks[1],
-      simPrice: tsllPrice,
+      simPrice: tsllPrice.toFixed(2),
       simPnl: (tsllPrice - stocks[1].avgCost) / stocks[1].avgCost,
       cost: stocks[1].avgCost * stocks[1].qty,
       currentMarketValue: stocks[1].currentPrice * stocks[1].qty,
@@ -96,11 +96,14 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     let high = 10000;
     let mid;
     let result;
-
-    while (high - low > 0.00001) {
+    const tolerance = 0.00001; // Smaller tolerance for higher precision
+    let iterations = 0;
+    const maxIterations = 10000; // Increased iteration limit
+  
+    while (high - low > tolerance && iterations < maxIterations) {
       mid = (low + high) / 2;
       result = calculateValues(mid);
-
+  
       if (goalSeekMode === 'amount') {
         if (result.total.amount > targetValue) {
           high = mid;
@@ -114,37 +117,40 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
           low = mid;
         }
       }
+  
+      iterations++;
     }
-
+  
+    // Final result setting with improved precision
     setGoalSeekResult({
       tsla: {
-        simPrice: Math.round(mid),
-        avgCost: result.tsla.avgCost.toFixed(2),
-        simPnl: (result.tsla.simPnl * 100).toFixed(2),
-        cost: Math.round(result.tsla.cost),
-        currentMarketValue: Math.round(result.tsla.currentMarketValue),
-        amount: Math.round(result.tsla.amount),
+        simPrice: result.tsla.simPrice ? parseFloat(result.tsla.simPrice).toFixed(2) : 0,
+        avgCost: result.tsla.avgCost ? parseFloat(result.tsla.avgCost).toFixed(2) : 0,
+        simPnl: result.tsla.simPnl ? (result.tsla.simPnl * 100).toFixed(2) : 0,
+        cost: result.tsla.cost ? parseFloat(result.tsla.cost).toFixed(2) : 0,
+        currentMarketValue: result.tsla.currentMarketValue ? parseFloat(result.tsla.currentMarketValue).toFixed(2) : 0,
+        amount: result.tsla.amount ? parseFloat(result.tsla.amount).toFixed(2) : 0,
       },
       tsll: {
-        simPrice: Math.round(result.tsll.simPrice),
-        avgCost: result.tsll.avgCost.toFixed(2),
-        simPnl: (result.tsll.simPnl * 100).toFixed(2),
-        cost: Math.round(result.tsll.cost),
-        currentMarketValue: Math.round(result.tsll.currentMarketValue),
-        amount: Math.round(result.tsll.amount),
+        simPrice: result.tsll.simPrice ? parseFloat(result.tsll.simPrice).toFixed(2) : 0,
+        avgCost: result.tsll.avgCost ? parseFloat(result.tsll.avgCost).toFixed(2) : 0,
+        simPnl: result.tsll.simPnl ? (result.tsll.simPnl * 100).toFixed(2) : 0,
+        cost: result.tsll.cost ? parseFloat(result.tsll.cost).toFixed(2) : 0,
+        currentMarketValue: result.tsll.currentMarketValue ? parseFloat(result.tsll.currentMarketValue).toFixed(2) : 0,
+        amount: result.tsll.amount ? parseFloat(result.tsll.amount).toFixed(2) : 0,
       },
       total: {
-        cost: Math.round(result.total.cost),
-        currentMarketValue: Math.round(result.total.currentMarketValue),
-        amount: Math.round(result.total.amount),
-        pnl: (result.total.pnl * 100).toFixed(2),
+        cost: result.total.cost ? parseFloat(result.total.cost).toFixed(2) : 0,
+        currentMarketValue: result.total.currentMarketValue ? parseFloat(result.total.currentMarketValue).toFixed(2) : 0,
+        amount: result.total.amount ? parseFloat(result.total.amount).toFixed(2) : 0,
+        pnl: result.total.pnl ? (result.total.pnl * 100).toFixed(2) : 0,
       }
     });
   };
 
   const formatCurrency = (value) => {
-    if (!value) return "$0";
-    return `$${Math.round(value).toLocaleString()}`;
+    if (!value) return "$0.00"; // Ensure it returns with two decimals
+    return `$${parseFloat(value).toFixed(2).toLocaleString()}`;
   };
 
   const { tsla, tsll, total } = calculateValues(tslaSim);
@@ -178,12 +184,12 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
               <th className="px-2 py-2 border border-gray-300 text-center">Symbol</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Quantity</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Qty</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Market Value</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
               <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
-              <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
+              <th className="px-2 py-2 border border-gray-300 text-center">Sim Amount</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 text-center">
@@ -209,7 +215,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
                 </td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.cost)}</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.currentMarketValue)}</td>
-                <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.simPrice)}</td>
+                <td className="px-2 py-2 border border-gray-300"> {`$${parseFloat(stock.simPrice).toFixed(2)}`}</td>
                 <td className="px-2 py-2 border border-gray-300">{(stock.simPnl * 100).toFixed(2)}%</td>
                 <td className="px-2 py-2 border border-gray-300">{formatCurrency(stock.amount)}</td>
               </tr>
@@ -226,6 +232,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
             </tr>
           </tbody>
         </table>
+
       </div>
 
       {/* Goal Seek Section */}
@@ -295,7 +302,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
                 <th className="px-2 py-2 border border-gray-300 text-center">Market Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Avg Cost</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Cost</th>
-                <th className="px-2 py-2 border border-gray-300 text-center">Current Market Value</th>
+                <th className="px-2 py-2 border border-gray-300 text-center">Market Value</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim Price</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Sim P&L %</th>
                 <th className="px-2 py-2 border border-gray-300 text-center">Simulated Amount</th>
