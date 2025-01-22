@@ -7,7 +7,7 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
     { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2551 },
   ]);
-  const [tslaSim, setTslaSim] = useState(2345.1052549365);
+  const [tslaSim, setTslaSim] = useState(2027.49);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
   const [targetValue, setTargetValue] = useState(1000000);
   const [targetPnL, setTargetPnL] = useState(100);
