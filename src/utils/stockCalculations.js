@@ -4,7 +4,7 @@ export const DEFAULT_STOCKS = [
   { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2616 },
 ];
 
-export const DEFAULT_TSLA_SIM = 2027.49;
+export const DEFAULT_TSLA_SIM = 2600;
 export const DEFAULT_TARGET_VALUE = 1000000;
 export const DEFAULT_TARGET_PNL = 100;
 
