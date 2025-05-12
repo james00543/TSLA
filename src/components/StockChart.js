@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Title, AreaChart, BarChart, Select, SelectItem } from '@tremor/react';
 
+const ALPHA_VANTAGE_KEY = process.env.REACT_APP_ALPHA_VANTAGE_KEY;
+
 const StockChart = ({ symbol }) => {
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,61 +21,60 @@ const StockChart = ({ symbol }) => {
     const fetchHistoricalData = async () => {
       setIsLoading(true);
       setError(null);
-      
       try {
-        const endDate = new Date();
-        const startDate = new Date();
-        
-        // Set time range
-        switch (timeRange) {
-          case '1W':
-            startDate.setDate(startDate.getDate() - 7);
-            break;
-          case '1M':
-            startDate.setMonth(startDate.getMonth() - 1);
-            break;
-          case '3M':
-            startDate.setMonth(startDate.getMonth() - 3);
-            break;
-          case '1Y':
-            startDate.setFullYear(startDate.getFullYear() - 1);
-            break;
-          default:
-            startDate.setMonth(startDate.getMonth() - 1);
-        }
-
-        const response = await fetch(
-          `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${Math.floor(startDate.getTime() / 1000)}&to=${Math.floor(endDate.getTime() / 1000)}&token=${process.env.REACT_APP_FINNHUB_API_KEY}`
-        );
-
+        // Alpha Vantage returns up to 100 days for free tier (compact)
+        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=compact&apikey=${ALPHA_VANTAGE_KEY}`;
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch historical data');
         }
-
         const data = await response.json();
-        
-        if (data.s !== 'ok') {
-          throw new Error('Invalid data received');
+        if (!data['Time Series (Daily)']) {
+          throw new Error(data['Error Message'] || data['Note'] || 'Invalid data received');
         }
-
-        const formattedData = data.t.map((timestamp, index) => ({
-          date: new Date(timestamp * 1000).toLocaleDateString(),
-          price: data.c[index],
-          volume: data.v[index],
-          high: data.h[index],
-          low: data.l[index],
-        }));
-
+        // Parse and sort by date ascending
+        const allDates = Object.keys(data['Time Series (Daily)']).sort();
+        // Filter by time range
+        const endDate = new Date(allDates[allDates.length - 1]);
+        let startDate = new Date(endDate);
+        switch (timeRange) {
+          case '1W':
+            startDate.setDate(endDate.getDate() - 7);
+            break;
+          case '1M':
+            startDate.setMonth(endDate.getMonth() - 1);
+            break;
+          case '3M':
+            startDate.setMonth(endDate.getMonth() - 3);
+            break;
+          case '1Y':
+            startDate.setFullYear(endDate.getFullYear() - 1);
+            break;
+          default:
+            startDate.setMonth(endDate.getMonth() - 1);
+        }
+        const filteredDates = allDates.filter(dateStr => {
+          const d = new Date(dateStr);
+          return d >= startDate && d <= endDate;
+        });
+        const formattedData = filteredDates.map(dateStr => {
+          const d = data['Time Series (Daily)'][dateStr];
+          return {
+            date: dateStr,
+            price: parseFloat(d['5. adjusted close']),
+            volume: parseInt(d['6. volume'], 10),
+            high: parseFloat(d['2. high']),
+            low: parseFloat(d['3. low'])
+          };
+        });
         // Calculate moving averages
         const ma20 = calculateMovingAverage(formattedData, 20);
         const ma50 = calculateMovingAverage(formattedData, 50);
-
         const dataWithMA = formattedData.map((item, index) => ({
           ...item,
           ma20: ma20[index],
           ma50: ma50[index],
         }));
-
         setChartData(dataWithMA);
       } catch (err) {
         console.error('Error fetching historical data:', err);
@@ -82,7 +83,6 @@ const StockChart = ({ symbol }) => {
         setIsLoading(false);
       }
     };
-
     fetchHistoricalData();
   }, [symbol, timeRange]);
 
@@ -130,7 +130,7 @@ const StockChart = ({ symbol }) => {
         index="date"
         categories={["price", "ma20", "ma50"]}
         colors={["blue", "green", "red"]}
-        valueFormatter={(number) => `$${number.toFixed(2)}`}
+        valueFormatter={(number) => `$${number ? number.toFixed(2) : ''}`}
         yAxisWidth={60}
         showLegend={true}
         showGridLines={true}
@@ -145,7 +145,7 @@ const StockChart = ({ symbol }) => {
           index="date"
           categories={["volume"]}
           colors={["gray"]}
-          valueFormatter={(number) => number.toLocaleString()}
+          valueFormatter={(number) => number ? number.toLocaleString() : ''}
           showLegend={false}
           showGridLines={false}
           showAnimation={true}
