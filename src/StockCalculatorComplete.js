@@ -8,7 +8,6 @@ import {
   calculateStockValues,
   validateStockInput
 } from './utils/stockCalculations';
-import StockChart from './components/StockChart';
 import PortfolioAnalytics from './components/PortfolioAnalytics';
 
 const FINNHUB_TOKEN = process.env.REACT_APP_FINNHUB_API_KEY;
@@ -190,12 +189,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
 
       {/* Portfolio Analytics */}
       <PortfolioAnalytics stocks={stocks} total={total} />
-
-      {/* Stock Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <StockChart symbol="TSLA" />
-        <StockChart symbol="TSLL" />
-      </div>
 
       {/* Stock Details Table with Inline Editing */}
       <div className="section bg-gray-50 p-4 rounded-md mb-8 overflow-x-auto">
