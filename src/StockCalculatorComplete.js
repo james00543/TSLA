@@ -1,30 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  DEFAULT_STOCKS,
+  DEFAULT_TSLA_SIM,
+  DEFAULT_TARGET_VALUE,
+  DEFAULT_TARGET_PNL,
+  formatCurrency,
+  calculateStockValues,
+  validateStockInput
+} from './utils/stockCalculations';
 
-const FINNHUB_TOKEN = 'crir1c9r01qo3ctbp2agcrir1c9r01qo3ctbp2b0';  // Replace with your Finnhub API token
+const FINNHUB_TOKEN = process.env.REACT_APP_FINNHUB_API_KEY;
 
 const EnhancedStockCalculatorWithRESTAPI = () => {
-  const [stocks, setStocks] = useState([
-    { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
-    { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2616 },
-  ]);
-  const [tslaSim, setTslaSim] = useState(2027.49);
+  const [stocks, setStocks] = useState(DEFAULT_STOCKS);
+  const [tslaSim, setTslaSim] = useState(DEFAULT_TSLA_SIM);
   const [inputTslaSim, setInputTslaSim] = useState(tslaSim);
-  const [targetValue, setTargetValue] = useState(1000000);
-  const [targetPnL, setTargetPnL] = useState(100);
+  const [targetValue, setTargetValue] = useState(DEFAULT_TARGET_VALUE);
+  const [targetPnL, setTargetPnL] = useState(DEFAULT_TARGET_PNL);
   const [goalSeekResult, setGoalSeekResult] = useState(null);
   const [goalSeekMode, setGoalSeekMode] = useState('amount');
   const [portfolioValue, setPortfolioValue] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch stock prices using REST API
   useEffect(() => {
     const fetchStockData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        const stockSymbols = ['TSLA', 'TSLL'];
+        if (!FINNHUB_TOKEN) {
+          throw new Error('Finnhub API key is not configured. Please check your environment variables.');
+        }
 
+        const stockSymbols = ['TSLA', 'TSLL'];
         const stockPromises = stockSymbols.map(symbol =>
           fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_TOKEN}`)
-            .then(res => res.json())
-            .then(data => ({ symbol, currentPrice: data.c }))
+            .then(res => {
+              if (!res.ok) {
+                throw new Error(`Failed to fetch data for ${symbol}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              if (!data.c) {
+                throw new Error(`Invalid data received for ${symbol}`);
+              }
+              return { symbol, currentPrice: data.c };
+            })
         );
 
         const stockData = await Promise.all(stockPromises);
@@ -42,7 +66,10 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
         setPortfolioValue(totalPortfolioValue);
 
       } catch (err) {
-        console.error('Failed to fetch stock data.');
+        console.error('Failed to fetch stock data:', err);
+        setError(err.message || 'Failed to fetch stock data. Please try again later.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -50,55 +77,26 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
   }, []);
 
   const handleStockChange = (index, field, value) => {
+    if (!validateStockInput(value)) return;
+
     const newStocks = [...stocks];
     newStocks[index][field] = parseFloat(value);
     setStocks(newStocks);
   };
 
-  const calculateValues = (tslaPrice) => {
-    if (tslaPrice === null || tslaPrice === "" || isNaN(tslaPrice)) {
-      return { tsla: null, tsll: null, total: null };
-    }
-
-    const tsla = {
-      ...stocks[0],
-      simPrice: tslaPrice.toFixed(2),
-      simPnl: (tslaPrice - stocks[0].avgCost) / stocks[0].avgCost,
-      cost: stocks[0].avgCost * stocks[0].qty,
-      currentMarketValue: stocks[0].currentPrice * stocks[0].qty,
-      amount: tslaPrice * stocks[0].qty,
-    };
-
-    const tslaPercentChange = (tslaPrice - stocks[0].currentPrice) / stocks[0].currentPrice;
-    const tsllPrice = stocks[1].currentPrice * (1 + 2 * tslaPercentChange);
-
-    const tsll = {
-      ...stocks[1],
-      simPrice: tsllPrice.toFixed(2),
-      simPnl: (tsllPrice - stocks[1].avgCost) / stocks[1].avgCost,
-      cost: stocks[1].avgCost * stocks[1].qty,
-      currentMarketValue: stocks[1].currentPrice * stocks[1].qty,
-      amount: tsllPrice * stocks[1].qty,
-    };
-
-    const total = {
-      amount: tsla.amount + tsll.amount,
-      cost: tsla.cost + tsll.cost,
-      currentMarketValue: tsla.currentMarketValue + tsll.currentMarketValue,
-      pnl: (tsla.amount + tsll.amount - (tsla.cost + tsll.cost)) / (tsla.cost + tsll.cost),
-    };
-
-    return { tsla, tsll, total };
-  };
+  // Memoize the calculation function
+  const calculateValues = useMemo(() => {
+    return (tslaPrice) => calculateStockValues(stocks, tslaPrice);
+  }, [stocks]);
 
   const runGoalSeek = () => {
     let low = 0;
     let high = 10000;
     let mid;
     let result;
-    const tolerance = 0.00001; // Smaller tolerance for higher precision
+    const tolerance = 0.00001;
     let iterations = 0;
-    const maxIterations = 10000; // Increased iteration limit
+    const maxIterations = 10000;
   
     while (high - low > tolerance && iterations < maxIterations) {
       mid = (low + high) / 2;
@@ -121,7 +119,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       iterations++;
     }
   
-    // Final result setting with improved precision
     setGoalSeekResult({
       tsla: {
         simPrice: result.tsla.simPrice ? parseFloat(result.tsla.simPrice).toFixed(2) : 0,
@@ -148,11 +145,6 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
     });
   };
 
-  const formatCurrency = (value) => {
-    if (!value) return "$0.00"; // Ensure it returns with two decimals
-    return `$${parseFloat(value).toFixed(2).toLocaleString()}`;
-  };
-
   const { tsla, tsll, total } = calculateValues(tslaSim);
 
   return (
@@ -160,19 +152,38 @@ const EnhancedStockCalculatorWithRESTAPI = () => {
       {/* Stock Portfolio Simulator */}
       <div className="section bg-blue-50 p-4 rounded-md mb-8">
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Tesla Stock Portfolio Simulator with Leveraged ETF</h1>
-        <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
-        <input
-          type="number"
-          value={inputTslaSim || ''}
-          onChange={(e) => setInputTslaSim(e.target.value === '' ? '' : Number(e.target.value))}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-        />
-        <button
-          onClick={() => setTslaSim(inputTslaSim)}
-          className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
-        >
-          Submit
-        </button>
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-2">Loading stock data...</span>
+          </div>
+        ) : (
+          <>
+            <label className="block text-sm font-medium text-gray-700 mb-2">TSLA Simulated Price:</label>
+            <input
+              type="number"
+              value={inputTslaSim || ''}
+              onChange={(e) => setInputTslaSim(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+              step="0.01"
+            />
+            <button
+              onClick={() => setTslaSim(inputTslaSim)}
+              className="w-full mt-2 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300"
+            >
+              Submit
+            </button>
+          </>
+        )}
       </div>
 
       {/* Stock Details Table with Inline Editing */}
