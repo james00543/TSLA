@@ -7,12 +7,6 @@ const PortfolioAnalytics = ({ stocks, total }) => {
     const totalCost = stocks.reduce((acc, stock) => acc + (stock.avgCost * stock.qty), 0);
     const totalValue = stocks.reduce((acc, stock) => acc + (stock.currentPrice * stock.qty), 0);
     const totalPnL = ((totalValue - totalCost) / totalCost) * 100;
-    
-    // Calculate weighted average cost
-    const weightedAvgCost = stocks.reduce((acc, stock) => {
-      const positionValue = stock.avgCost * stock.qty;
-      return acc + (positionValue / totalCost) * stock.avgCost;
-    }, 0);
 
     // Calculate position weights
     const positionWeights = stocks.map(stock => ({
@@ -24,7 +18,6 @@ const PortfolioAnalytics = ({ stocks, total }) => {
       totalCost,
       totalValue,
       totalPnL,
-      weightedAvgCost,
       positionWeights
     };
   };
@@ -32,9 +25,9 @@ const PortfolioAnalytics = ({ stocks, total }) => {
   const metrics = calculateMetrics();
 
   return (
-    <div className="mt-8">
-      <Title className="mb-4">Portfolio Analytics</Title>
-      <Grid numItems={1} numItemsSm={2} numItemsLg={4} className="gap-4">
+    <div className="mt-4">
+      <Title className="mb-2">Portfolio Analytics</Title>
+      <Grid numItems={1} numItemsSm={3} numItemsLg={3} className="gap-4 mb-4">
         <Card>
           <Text>Total Cost Basis</Text>
           <Metric>${metrics.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Metric>
@@ -49,15 +42,11 @@ const PortfolioAnalytics = ({ stocks, total }) => {
             {metrics.totalPnL.toFixed(2)}%
           </Metric>
         </Card>
-        <Card>
-          <Text>Weighted Avg Cost</Text>
-          <Metric>${metrics.weightedAvgCost.toFixed(2)}</Metric>
-        </Card>
       </Grid>
 
-      <div className="mt-4">
+      <div className="mb-4">
         <Card>
-          <Title className="mb-4">Position Allocation</Title>
+          <Title className="mb-2">Position Allocation</Title>
           <div className="space-y-4">
             {metrics.positionWeights.map((position) => (
               <div key={position.symbol} className="flex items-center">
@@ -77,9 +66,9 @@ const PortfolioAnalytics = ({ stocks, total }) => {
         </Card>
       </div>
 
-      <div className="mt-4">
+      <div>
         <Card>
-          <Title className="mb-4">Portfolio Insights</Title>
+          <Title className="mb-2">Portfolio Insights</Title>
           <div className="space-y-2">
             <Text>
               • Your portfolio is {metrics.totalPnL >= 0 ? 'up' : 'down'} {Math.abs(metrics.totalPnL).toFixed(2)}% from cost basis
