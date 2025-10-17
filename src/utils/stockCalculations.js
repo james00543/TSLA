@@ -1,7 +1,7 @@
 // Constants
 export const DEFAULT_STOCKS = [
   { symbol: 'TSLA', currentPrice: 0, avgCost: 210.19, qty: 181 },
-  { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2616 },
+  { symbol: 'TSLL', currentPrice: 0, avgCost: 13.70, qty: 2735 },
 ];
 
 export const DEFAULT_TSLA_SIM = 2600;
